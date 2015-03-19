@@ -28,6 +28,17 @@ public class Deck {
 
 	}
 
+	// Added a no-arg constructor to add jokers to the deck
+	public Deck(int numberOfJokers) {
+
+		this();
+
+		for (int i = 0; i <= numberOfJokers; i++) {
+			Card NewCard = new Card(eSuit.JOKER, eRank.JOKER);
+			cards.add(NewCard);
+		}
+		Collections.shuffle(cards);
+	}
 
 	public Card drawFromDeck() {
 		// Removes the first card from the deck and return the card

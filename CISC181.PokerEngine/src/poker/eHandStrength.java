@@ -2,6 +2,7 @@ package poker;
 
 public enum eHandStrength {
 
+	// Added the hand strength for Natural Royal Flush and 5 of a kind
 	NaturalRoyalFlush(110),
 	RoyalFlush(100),
 	StraightFlush(90),

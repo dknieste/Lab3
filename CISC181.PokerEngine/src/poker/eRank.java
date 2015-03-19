@@ -14,7 +14,9 @@ public enum eRank {
 	JACK(11), 
 	QUEEN(12), 
 	KING(13), 
-	ACE(14);
+	ACE(14),
+	// Added the enum for joker
+	JOKER(99);
 	
 
 	private eRank(final int rank){
