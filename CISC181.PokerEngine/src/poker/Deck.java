@@ -51,4 +51,10 @@ public class Deck {
 		// Returns the total number of cards still in the deck
 		return cards.size();
 	}
+	
+	public ArrayList<Card> getCards()
+	{
+		return this.cards;
+	}
+	
 }

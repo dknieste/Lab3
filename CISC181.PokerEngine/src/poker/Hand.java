@@ -17,18 +17,25 @@ public class Hand {
 	private boolean Straight;
 	private boolean Ace;
 
-	public Hand(Deck d) {
-		ArrayList<Card> Import = new ArrayList<Card>();
-		for (int x = 0; x < 5; x++) {
-			Import.add(d.drawFromDeck());
-		}
-		CardsInHand = Import;
+	// new data fields needed to deal with jokers
+	private int numberOfJokers;
+	private static Deck dummyDeck = new Deck();
+	private ArrayList<Card> bestHand;
+
+	// no-arg constructor
+	public Hand() {
 	}
 
-	
-	
+	public Hand(ArrayList<Card> setCards) {
+		this.CardsInHand = setCards;
+	}
+
 	public ArrayList<Card> getCards() {
 		return CardsInHand;
+	}
+
+	public Card getOneCard(int index) {
+		return CardsInHand.get(index);
 	}
 
 	public int getHandStrength() {
@@ -51,20 +58,139 @@ public class Hand {
 		return Ace;
 	}
 
+	// new - needed to deal with jokers
+	public ArrayList<Card> getBestHand() {
+		return bestHand;
+	}
+
+	public void setBestHand(ArrayList<Card> bestHand) {
+		this.bestHand = bestHand;
+	}
+
+	// Draws five cards from the deck
+	public Hand(Deck d) {
+		ArrayList<Card> Import = new ArrayList<Card>();
+		for (int x = 0; x < 5; x++) {
+			Import.add(d.drawFromDeck());
+		}
+		CardsInHand = Import;
+	}
+
+	// calls methods to evaluate the seeded hand
 	public static Hand EvalHand(ArrayList<Card> SeededHand) {
 		Deck d = new Deck();
 		Hand h = new Hand(d);
 		h.CardsInHand = SeededHand;
 		h.EvalHand();
-		
+
 		return h;
 	}
+
+	/*
+	 * ---JOKERS--- First we will deal with 5 jokers separately - no need to use
+	 * a lot of memory for this. If there is anything but five, we will pass it
+	 * into our method for handling any number of jokers.
+	 */
+
+	public void handleFiveJokers() {
+		for (eCardNo i : eCardNo.values()) {
+			if (CardsInHand.get(i.getCardNo()).getRank() == eRank.JOKER)
+				numberOfJokers += 1;
+		}
+		if (numberOfJokers == 5) {
+			ScoreHand(eHandStrength.RoyalFlush, 14, 0, 0);
+		}
+
+		else
+			handleJokers();
+	}
+
+	/*
+	 * Next, we will use a logic discussed in class called 'exploding' hands. We
+	 * will create an array list of all possible hands depending on the number
+	 * of jokers, and then assess those hands and find the highest scoring one.
+	 * 1 joker = 52 hands, 2 jokers = 2704 hands, etc.
+	 */
+
+	public void handleJokers() {
+		/*
+		 * Copies the hand, then cycles through each card and passes it through
+		 * a method. This method will find all possible hands IF the card is a
+		 * joker
+		 */
+		ArrayList<Hand> originalHand = new ArrayList<Hand>();
+		originalHand.add(this);
+		int currentCard = 0;
+		for (Card i : this.getCards()) {
+			originalHand = findPossibleHands(originalHand, currentCard);
+			currentCard++;
+		}
+
+		// Will then evaluate each generated hand
+		for (Hand hEval : originalHand) {
+			hEval.EvalHand();
+		}
+
+		// Sort the array of generated hands, seeking the best hand
+		Collections.sort(originalHand, Hand.HandRank);
+
+		// gives the user the score of the first hand in the array
+		// remember: the first hand is always the best, even in ties
+		this.setBestHand(originalHand.get(0).getCards());
+		this.HandStrength = originalHand.get(0).getHandStrength();
+		this.HiHand = originalHand.get(0).getHighPairStrength();
+		this.LoHand = originalHand.get(0).getLowPairStrength();
+		this.Kicker = originalHand.get(0).getKicker();
+	}
+
+	/*
+	 * Here is where we are 'exploding' the hands, as our professor called it.
+	 * It is basically passing in the player's hand, and returning an array list
+	 * of all possible hands.
+	 */
+
+	private static ArrayList<Hand> findPossibleHands(
+			ArrayList<Hand> originalHand, int cardNumber) {
+
+		ArrayList<Hand> possibleHands = new ArrayList<Hand>();
+
+		// first checks if we have a joker
+		for (Hand h : originalHand) {
+			ArrayList<Card> c = h.getCards();
+			if (c.get(cardNumber).getRank().getRank() == eRank.JOKER.getRank()) {
+
+				// making an array of all cards we are gonna sub in for THAT
+				// joker
+				for (Card substituteCard : dummyDeck.getCards()) {
+					ArrayList<Card> subCardList = new ArrayList<Card>();
+					subCardList.add(substituteCard);
+
+					// also adds the other cards we have in the hand
+					for (int j = 0; j < 5; j++) {
+						if (cardNumber != j) {
+							subCardList.add(h.getOneCard(j));
+						}
+					}
+
+					// time to make the hands with our cards
+					Hand subHand = new Hand(subCardList);
+					possibleHands.add(subHand);
+				}
+			}
+
+			// just add the hand w/out exploding if not joker
+			else {
+				possibleHands.add(h);
+			}
+		}
+		return possibleHands;
+	}
+
 
 	public void EvalHand() {
 		// Evaluates if the hand is a flush and/or straight then figures out
 		// the hand's strength attributes
 
-		
 		// Sort the cards!
 		Collections.sort(CardsInHand, Card.CardRank);
 
@@ -108,7 +234,7 @@ public class Hand {
 				Straight = false;
 			}
 
-		// Looks for straight without Ace
+			// Looks for straight without Ace
 		} else if (CardsInHand.get(eCardNo.FirstCard.getCardNo()).getRank()
 				.getRank() == CardsInHand.get(eCardNo.SecondCard.getCardNo())
 				.getRank().getRank() + 1
@@ -141,10 +267,19 @@ public class Hand {
 					CardsInHand.get(eCardNo.FirstCard.getCardNo()).getRank()
 							.getRank(), 0, 0);
 		}
-		
-		//Five of a kind
-		
-		
+
+		/*
+		 * New possible hand - Five of a kind. Tests that 1st and 5th card are
+		 * equal, then sets high card to the 1st card. No low card or kickers
+		 */
+
+		else if (CardsInHand.get(eCardNo.FirstCard.getCardNo()).getRank() == CardsInHand
+				.get(eCardNo.FifthCard.getCardNo()).getRank()) {
+			ScoreHand(eHandStrength.FiveOfAKind,
+					CardsInHand.get(eCardNo.FirstCard.getCardNo()).getRank()
+							.getRank(), 0, 0);
+		}
+
 		// Four of a Kind
 		else if (CardsInHand.get(eCardNo.FirstCard.getCardNo()).getRank() == CardsInHand
 				.get(eCardNo.SecondCard.getCardNo()).getRank()
