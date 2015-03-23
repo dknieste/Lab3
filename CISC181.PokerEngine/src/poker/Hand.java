@@ -11,6 +11,9 @@ public class Hand {
 	private int HiHand;
 	private int LoHand;
 	private int Kicker;
+	// Natural will automatically be 1.
+	// This will set to 0 if any of the cards are jokers.
+	private int Natural = 1;
 	private boolean bScored = false;
 
 	private boolean Flush;
@@ -57,6 +60,11 @@ public class Hand {
 	public boolean getAce() {
 		return Ace;
 	}
+	
+	// Add getter for natural or not
+	public int getNatural() {
+		return Natural;
+	}
 
 	// new - needed to deal with jokers
 	public ArrayList<Card> getBestHand() {
@@ -81,7 +89,7 @@ public class Hand {
 		Deck d = new Deck();
 		Hand h = new Hand(d);
 		h.CardsInHand = SeededHand;
-		h.EvalHand();
+		h.handleFiveJokers();
 
 		return h;
 	}
@@ -99,10 +107,13 @@ public class Hand {
 		}
 		if (numberOfJokers == 5) {
 			ScoreHand(eHandStrength.RoyalFlush, 14, 0, 0);
+			Natural = 0;
 		}
+		
 
-		else
+		else {
 			handleJokers();
+		}
 	}
 
 	/*
@@ -158,7 +169,7 @@ public class Hand {
 		for (Hand h : originalHand) {
 			ArrayList<Card> c = h.getCards();
 			if (c.get(cardNumber).getRank().getRank() == eRank.JOKER.getRank()) {
-
+				
 				// making an array of all cards we are gonna sub in for THAT
 				// joker
 				for (Card substituteCard : dummyDeck.getCards()) {
@@ -168,7 +179,7 @@ public class Hand {
 					// also adds the other cards we have in the hand
 					for (int j = 0; j < 5; j++) {
 						if (cardNumber != j) {
-							subCardList.add(h.getOneCard(j));
+							subCardList.add(h.getCards().get(j));
 						}
 					}
 
@@ -188,6 +199,7 @@ public class Hand {
 
 
 	public void EvalHand() {
+				
 		// Evaluates if the hand is a flush and/or straight then figures out
 		// the hand's strength attributes
 
@@ -361,7 +373,9 @@ public class Hand {
 							.getRank(), 0,
 					CardsInHand.get(eCardNo.FifthCard.getCardNo()).getRank()
 							.getRank());
-		} else if (CardsInHand.get(eCardNo.ThirdCard.getCardNo()).getRank() == CardsInHand
+		}
+		
+		else if (CardsInHand.get(eCardNo.ThirdCard.getCardNo()).getRank() == CardsInHand
 				.get(eCardNo.FifthCard.getCardNo()).getRank()) {
 			ScoreHand(eHandStrength.ThreeOfAKind,
 					CardsInHand.get(eCardNo.ThirdCard.getCardNo()).getRank()
@@ -469,6 +483,12 @@ public class Hand {
 			if (result != 0) {
 				return result;
 			}
+			
+			// Must add a way to give preference to non-joker hands (naturals)
+			result = h2.getNatural() - h1.getNatural();
+			if (result != 0) {
+				return result;
+			}
 
 			result = h2.HiHand - h1.HiHand;
 			if (result != 0) {
@@ -488,4 +508,5 @@ public class Hand {
 			return 0;
 		}
 	};
+
 }
