@@ -105,13 +105,13 @@ public class Hand {
 			if (CardsInHand.get(i.getCardNo()).getRank() == eRank.JOKER)
 				numberOfJokers += 1;
 		}
+		// highest possible is 5 aces
 		if (numberOfJokers == 5) {
-			ScoreHand(eHandStrength.RoyalFlush, 14, 0, 0);
-			Natural = 0;
+			ScoreHand(eHandStrength.FiveOfAKind, 14, 0, 0);
 		}
-		
 
 		else {
+			Natural = 0;
 			handleJokers();
 		}
 	}
@@ -136,15 +136,13 @@ public class Hand {
 			originalHand = findPossibleHands(originalHand, currentCard);
 			currentCard++;
 		}
-
 		// Will then evaluate each generated hand
 		for (Hand hEval : originalHand) {
 			hEval.EvalHand();
 		}
-
 		// Sort the array of generated hands, seeking the best hand
 		Collections.sort(originalHand, Hand.HandRank);
-
+		
 		// gives the user the score of the first hand in the array
 		// remember: the first hand is always the best, even in ties
 		this.setBestHand(originalHand.get(0).getCards());
@@ -194,15 +192,16 @@ public class Hand {
 				possibleHands.add(h);
 			}
 		}
+		
 		return possibleHands;
 	}
 
 
 	public void EvalHand() {
-				
+		
 		// Evaluates if the hand is a flush and/or straight then figures out
 		// the hand's strength attributes
-
+		
 		// Sort the cards!
 		Collections.sort(CardsInHand, Card.CardRank);
 
@@ -469,9 +468,10 @@ public class Hand {
 
 	}
 
-	/**
+	/*
 	 * Custom sort to figure the best hand in an array of hands
 	 */
+
 	public static Comparator<Hand> HandRank = new Comparator<Hand>() {
 
 		public int compare(Hand h1, Hand h2) {
@@ -480,12 +480,6 @@ public class Hand {
 
 			result = h2.HandStrength - h1.HandStrength;
 
-			if (result != 0) {
-				return result;
-			}
-			
-			// Must add a way to give preference to non-joker hands (naturals)
-			result = h2.getNatural() - h1.getNatural();
 			if (result != 0) {
 				return result;
 			}
@@ -501,6 +495,12 @@ public class Hand {
 			}
 
 			result = h2.Kicker = h1.Kicker;
+			if (result != 0) {
+				return result;
+			}
+			
+			// Must add a way to give preference to non-joker hands (naturals)
+			result = h2.getNatural() - h1.getNatural();
 			if (result != 0) {
 				return result;
 			}

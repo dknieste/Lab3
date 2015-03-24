@@ -9,13 +9,13 @@ public class PlayHand {
 
 
 
-		for (int gCount = 0; gCount <= 200000; gCount++) {
+		for (int gCount = 0; gCount <= 2; gCount++) {
 			ArrayList<Hand> Hands = new ArrayList<Hand>();
 			Deck d = new Deck();
 
 			for (int hCnt = 0; hCnt <= 2; hCnt++) {
 				Hand h = new Hand(d);
-				h.EvalHand();
+				h.handleFiveJokers();
 				Hands.add(h);
 			}
 			Collections.sort(Hands, Hand.HandRank);
